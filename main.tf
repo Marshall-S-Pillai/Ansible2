@@ -2,13 +2,13 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# Step 1: Create a secret in AWS Secrets Manager with the new name
+# Step 1: Create a secret in AWS Secrets Manager
 resource "aws_secretsmanager_secret" "powertool" {
   name        = "my-database-secret1"
   description = "A secret for my database password"
 }
 
-# Step 2: Store the secret value (e.g., db password) in the Secrets Manager with the new version name
+# Step 2: Store the secret value in Secrets Manager
 resource "aws_secretsmanager_secret_version" "powertool_version" {
   secret_id     = aws_secretsmanager_secret.powertool.id
   secret_string = jsonencode({
@@ -18,7 +18,7 @@ resource "aws_secretsmanager_secret_version" "powertool_version" {
   depends_on = [aws_secretsmanager_secret.powertool]
 }
 
-# Step 3: Retrieve the secret version using a data source with the updated name
+# Step 3: Retrieve the secret version
 data "aws_secretsmanager_secret_version" "powertool_version" {
   secret_id = aws_secretsmanager_secret.powertool.id
 
@@ -31,7 +31,7 @@ output "db_password" {
   sensitive = true
 }
 
-# Step 5: Create an IAM Role for EC2 instance to access Secrets Manager
+# Step 5: Create IAM Role for EC2 instance
 resource "aws_iam_role" "ec2_role" {
   name = "ec2_secrets_manager_role"
 
@@ -49,7 +49,7 @@ resource "aws_iam_role" "ec2_role" {
   })
 }
 
-# Step 6: Attach policy to IAM Role for EC2 to access Secrets Manager
+# Step 6: Attach policy to IAM Role for Secrets Manager access
 resource "aws_iam_policy" "secrets_manager_policy" {
   name        = "secrets_manager_policy"
   description = "Policy to allow EC2 instances to access Secrets Manager"
@@ -71,17 +71,20 @@ resource "aws_iam_role_policy_attachment" "ec2_secrets_manager_attachment" {
   role       = aws_iam_role.ec2_role.name
 }
 
-# Step 7: Launch an EC2 instance and use the secret value (e.g., for authentication)
+# Step 7: Launch EC2 instance with the secret
 resource "aws_instance" "powertool_instance" {
-  ami           = "ami-0c2b8ca1dad447f8a"  # Example valid AMI ID for ap-south-1 region
-  instance_type = "t2.micro"
-  iam_instance_profile = aws_iam_role.ec2_role.name
+  ami                    = "ami-0c2b8ca1dad447f8a"  # Example AMI ID for ap-south-1 region
+  instance_type          = "t2.micro"
+  iam_instance_profile   = aws_iam_role.ec2_role.name
 
   user_data = <<-EOF
               #!/bin/bash
-              # Fetch the DB password from Secrets Manager
-              DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "my-database-secret1" --query "SecretString" --output text | jq -r .db_password)
-              # Store the DB password in a file
+              yum install -y jq
+              DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "my-database-secret1" --query "SecretString" --output text | jq -r '.db_password')
+              if [ -z "$DB_PASSWORD" ]; then
+                echo "Error: DB password could not be retrieved from Secrets Manager."
+                exit 1
+              fi
               echo "DB_PASSWORD=${DB_PASSWORD}" > /etc/db_password.txt
               EOF
 
