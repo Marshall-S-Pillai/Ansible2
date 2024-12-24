@@ -1,0 +1,61 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+  
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: '1.5.0'
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Initialize Terraform for VPC module
+      run: |
+        terraform init -backend-config="bucket=powertool99" \
+                       -backend-config="key=vpc/terraform.tfstate" \
+                       -backend-config="region=ap-south-1" \
+                       -backend-config="encrypt=true" \
+                       -backend-config="dynamodb_table=powertool"
+
+    - name: Terraform Destroy for VPC
+      run: terraform destroy -auto-approve
+
+    - name: Initialize Terraform for Security Group module
+      run: |
+        export TF_INPUT=false
+        terraform init -reconfigure \
+                       -backend-config="bucket=powertool99" \
+                       -backend-config="key=security_group/terraform.tfstate" \
+                       -backend-config="region=ap-south-1" \
+                       -backend-config="encrypt=true" \
+                       -backend-config="dynamodb_table=powertool"
+
+    - name: Terraform Destroy for Security Group
+      run: terraform destroy -auto-approve
+
+    - name: Initialize Terraform for Subnet module
+      run: |
+        export TF_INPUT=false
+        terraform init -reconfigure \
+                       -backend-config="bucket=powertool99" \
+                       -backend-config="key=subnet/terraform.tfstate" \
+                       -backend-config="region=ap-south-1" \
+                       -backend-config="encrypt=true" \
+                       -backend-config="dynamodb_table=powertool"
+
+    - name: Terraform Destroy for Subnet
+      run: terraform destroy -auto-approve
