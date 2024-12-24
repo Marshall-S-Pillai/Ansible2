@@ -2,13 +2,13 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Step 1: Create a secret in AWS Secrets Manager
+# Step 1: Create a secret in AWS Secrets Manager with the new name
 resource "aws_secretsmanager_secret" "powertool" {
   name        = "my-database-secret1"
   description = "A secret for my database password"
 }
 
-# Step 2: Store the secret value in Secrets Manager
+# Step 2: Store the secret value in Secrets Manager with the new version name
 resource "aws_secretsmanager_secret_version" "powertool_version" {
   secret_id     = aws_secretsmanager_secret.powertool.id
   secret_string = jsonencode({
@@ -60,7 +60,7 @@ resource "aws_iam_role_policy_attachment" "ec2_secrets_manager_attachment" {
 
 # Step 5: Launch EC2 instance with IAM role to access Secrets Manager
 resource "aws_instance" "powertool_instance" {
-  ami                    = "ami-01816d07b1128cd2d"  # Replace with your region's AMI
+  ami                    = "ami-0fd05997b4dff7aac"  # Updated AMI ID
   instance_type          = "t2.micro"
   iam_instance_profile   = aws_iam_role.ec2_role.name
 
