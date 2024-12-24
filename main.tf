@@ -79,7 +79,9 @@ resource "aws_instance" "powertool_instance" {
 
   user_data = <<-EOF
               #!/bin/bash
+              # Fetch the DB password from Secrets Manager
               DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "my-database-secret1" --query "SecretString" --output text | jq -r .db_password)
+              # Store the DB password in a file
               echo "DB_PASSWORD=${DB_PASSWORD}" > /etc/db_password.txt
               EOF
 
