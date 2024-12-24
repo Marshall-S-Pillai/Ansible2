@@ -77,7 +77,7 @@ resource "aws_instance" "powertool_instance" {
               echo "DB_PASSWORD=${DB_PASSWORD}" > /etc/db_password.txt
               
               # Optionally, print the DB password for debugging (remove in production)
-              # echo "DB_PASSWORD: ${DB_PASSWORD}" 
+               echo "DB_PASSWORD: ${DB_PASSWORD}" 
 
 EOF
 
