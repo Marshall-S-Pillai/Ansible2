@@ -66,11 +66,20 @@ resource "aws_instance" "powertool_instance" {
 
   user_data = <<-EOF
               #!/bin/bash
+              
+              # Install AWS CLI and jq if not already installed
+              yum install -y aws-cli jq
+
               # Fetch the DB password from Secrets Manager
               DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "my-database-secret1" --query "SecretString" --output text | jq -r .db_password)
+
               # Store the DB password in a file
               echo "DB_PASSWORD=${DB_PASSWORD}" > /etc/db_password.txt
-              EOF
+              
+              # Optionally, print the DB password for debugging (remove in production)
+              # echo "DB_PASSWORD: ${DB_PASSWORD}" 
+
+EOF
 
   tags = {
     Name = "powertool_instance"
