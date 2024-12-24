@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-1"
+  region = "ap-south-1"
 }
 
 # Step 1: Create a secret in AWS Secrets Manager with the new name
