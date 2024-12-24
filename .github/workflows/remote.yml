@@ -17,6 +17,9 @@ jobs:
       with:
         terraform_version: 1.3.0
 
+    - name: Validate Terraform Configuration
+      run: terraform validate
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -55,14 +58,14 @@ jobs:
 
     - name: Run Ansible Playbook to Install Nginx
       run: |
-        ansible-playbook -i inventory setup_nginx.yml
+        ansible-playbook -i inventory setup_nginx.yml -v
       env:
         ANSIBLE_HOST_KEY_CHECKING: "False"
 
   destroy:
     runs-on: ubuntu-latest
     needs: terraform-apply
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
     - name: Checkout repository
